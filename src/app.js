@@ -84,7 +84,7 @@ app.use("/api/dentals", dentalRoutes);
 ========================= */
 
 // envoi notifications (logique existante)
-app.use('/notifications', notificationRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // envoi notifications admin
 app.use('/admin/notifications', adminNotificationRoutes);
