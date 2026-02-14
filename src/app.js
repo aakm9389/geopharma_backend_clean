@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import notificationRoutes from './routes/notification.routes.js';
 import adminNotificationRoutes from './routes/admin.notification.routes.js';
 import notificationDeviceRoutes from './routes/notification.device.routes.js';
+import adminUserRoutes from './routes/admin.user.routes.js';
 
 /* Routes */
 import authRoutes from "./routes/auth.routes.js";
@@ -91,5 +92,8 @@ app.use('/admin/notifications', adminNotificationRoutes);
 
 // 📲 enregistrement appareil FCM
 app.use('/api/notifications', notificationDeviceRoutes);
+
+app.use('/api/admin', adminUserRoutes);
+
 
 export default app;

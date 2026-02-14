@@ -10,18 +10,23 @@ export const login = async (req, res) => {
     const { email, password, role } = req.body;
 
     /* ======================
-       🔐 ADMIN
+       🔐 ADMIN LOGIN SÉCURISÉ
     ====================== */
-    if (role === 'admin' && password === '@dmin2025') {
-      let user = await User.findOne({ email });
+    if (role === 'admin') {
+      const user = await User.findOne({ email });
 
       if (!user) {
-        user = new User({
-          username: email,
-          email,
-          role: 'admin',
-          password: await bcrypt.hash(password, 10),
-          profession: null, // 👈 admin n’a pas de profession
+        return res.status(401).json({
+          message: 'Administrateur introuvable',
+        });
+      }
+
+      // 🔑 vérification mot de passe hashé
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(401).json({
+          message: 'Mot de passe incorrect',
         });
       }
 
@@ -39,7 +44,6 @@ export const login = async (req, res) => {
         { expiresIn: '1d' }
       );
 
-      // ✅ RÉPONSE STANDARDISÉE (IMPORTANT POUR FLUTTER)
       return res.json({
         token,
         user: {
@@ -52,18 +56,14 @@ export const login = async (req, res) => {
     }
 
     /* ======================
-       🔐 USER
+       🔐 USER LOGIN SÉCURISÉ
     ====================== */
-    if (role === 'user' && password === 'user2025') {
-      let user = await User.findOne({ email });
+    if (role === 'user') {
+      const user = await User.findOne({ email });
 
       if (!user) {
-        user = new User({
-          username: email,
-          email,
-          role: 'user',
-          password: await bcrypt.hash(password, 10),
-          profession: null, // 👈 1ère connexion
+        return res.status(401).json({
+          message: 'Utilisateur introuvable',
         });
       }
 
@@ -71,6 +71,15 @@ export const login = async (req, res) => {
       if (user.isBlocked) {
         return res.status(403).json({
           message: 'Compte bloqué par l’administrateur',
+        });
+      }
+
+      // 🔑 vérification mot de passe hashé
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(401).json({
+          message: 'Mot de passe incorrect',
         });
       }
 
@@ -88,7 +97,6 @@ export const login = async (req, res) => {
         { expiresIn: '1d' }
       );
 
-      // ✅ RÉPONSE STANDARDISÉE
       return res.json({
         token,
         user: {
@@ -121,25 +129,13 @@ export const register = async (req, res) => {
         .json({ message: 'Tous les champs sont obligatoires' });
     }
 
-    // 🔒 mot de passe imposé selon le rôle
-    if (role === 'admin' && password !== '@dmin2025') {
-      return res
-        .status(403)
-        .json({ message: 'Mot de passe administrateur invalide' });
-    }
-
-    if (role === 'user' && password !== 'user2025') {
-      return res
-        .status(403)
-        .json({ message: 'Mot de passe utilisateur invalide' });
-    }
-
     // ❌ Email déjà utilisé
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: 'Email déjà utilisé' });
     }
 
+    // 🔐 hash mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({

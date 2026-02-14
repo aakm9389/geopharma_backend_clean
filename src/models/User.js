@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
@@ -18,31 +18,39 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['admin', 'user'],
-      default: 'user',
+      enum: ["admin", "user"],
+      default: "user",
     },
 
-    // ✅ PROFESSION (choisie au premier lancement)
+    /* =====================================
+       🧑‍⚕️ PROFESSION (ciblage notifications)
+    ===================================== */
     profession: {
       type: String,
-      enum: ['doctor', 'pharmacist', 'student', 'other'],
+      enum: ["doctor", "pharmacist", "student", "other"],
       default: null,
     },
 
-    // 🔔 TOKENS FCM (pour push notifications)
+    /* =====================================
+       🔔 TOKENS FCM (multi-appareils)
+    ===================================== */
     fcmTokens: [
       {
         type: String,
       },
     ],
 
-    // 🔒 Blocage utilisateur
+    /* =====================================
+       🔒 Blocage utilisateur
+    ===================================== */
     isBlocked: {
       type: Boolean,
       default: false,
     },
 
-    // 🕒 Dernière connexion
+    /* =====================================
+       🕒 Dernière connexion
+    ===================================== */
     lastLoginAt: {
       type: Date,
       default: null,
@@ -53,8 +61,10 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// ✅ PROTECTION CONTRE OverwriteModelError
+/* =====================================
+   🛡️ Protection OverwriteModelError
+===================================== */
 const User =
-  mongoose.models.User || mongoose.model('User', userSchema);
+  mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;

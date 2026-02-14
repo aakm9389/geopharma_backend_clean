@@ -1,7 +1,11 @@
 import express from "express";
 import User from "../models/User.js";
+
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { requireAdmin } from "../middlewares/admin.middleware.js";
+
+import { changeUserPassword } from "../controllers/admin.controller.js";
+import { sendNotification } from "../controllers/notification.controller.js";
 
 const router = express.Router();
 
@@ -21,6 +25,7 @@ router.get(
           email: 1,
           lastLoginAt: 1,
           role: 1,
+          profession: 1,
           isBlocked: 1,
         }
       ).sort({ lastLoginAt: -1 });
@@ -63,6 +68,28 @@ router.patch(
       res.status(500).json({ message: err.message });
     }
   }
+);
+
+/* ==========================
+   🔑 CHANGE PASSWORD
+   PUT /api/admin/users/:id/password
+========================== */
+router.put(
+  "/admin/users/:id/password",
+  requireAuth,
+  requireAdmin,
+  changeUserPassword
+);
+
+/* ==========================
+   🔔 ENVOI NOTIFICATION ADMIN
+   POST /api/admin/notifications/send
+========================== */
+router.post(
+  "/admin/notifications/send",
+  requireAuth,
+  requireAdmin,
+  sendNotification
 );
 
 export default router;

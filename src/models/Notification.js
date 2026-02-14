@@ -1,46 +1,50 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const notificationSchema = new mongoose.Schema(
   {
+    // 📝 Contenu notification
     title: {
       type: String,
       required: true,
     },
 
-    message: {
+    body: {
       type: String,
       required: true,
     },
 
-    // 🎯 Ciblage par rôle
-    targetRoles: [
-      {
-        type: String,
-        enum: ['admin', 'user'],
-      },
-    ],
-
-    // 🎯 Ciblage par profession
-    targetProfessions: [
-      {
-        type: String,
-        enum: ['doctor', 'pharmacist', 'student', 'other'],
-      },
-    ],
-
-    // 🌍 Notification globale ?
-    isGlobal: {
-      type: Boolean,
-      default: false,
+    // 🎯 Type de ciblage
+    targetType: {
+      type: String,
+      enum: ["user", "role", "profession", "all"],
+      required: true,
     },
 
-    // 👤 Créée par admin
+    // 🎯 Valeur du ciblage
+    // user -> userId
+    // role -> "admin" | "user"
+    // profession -> "doctor" | "pharmacist" | etc
+    // all -> null
+    targetValue: {
+      type: String,
+      default: null,
+    },
+
+    // 👤 Admin qui a envoyé
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
 
-    // 🕒 Date de création
+    // 👁️ Utilisateurs ayant lu la notif
+    readBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    // 🕒 Date
     createdAt: {
       type: Date,
       default: Date.now,
@@ -49,4 +53,4 @@ const notificationSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
-export default mongoose.model('Notification', notificationSchema);
+export default mongoose.model("Notification", notificationSchema);
