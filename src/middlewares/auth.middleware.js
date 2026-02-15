@@ -1,7 +1,11 @@
-// backend/src/middlewares/auth.middleware.js
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-export const requireAuth = (req, res, next) => {
+/* ==========================
+   🔐 AUTHENTIFICATION REQUISE
+   Vérifie JWT + tokenVersion
+========================== */
+export const requireAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -21,13 +25,35 @@ export const requireAuth = (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
 
+    // 🔐 Vérification JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ Injection utilisateur
-    // decoded = { role, email, id? }
-    req.user = decoded;
+    // 🔍 On récupère l'utilisateur en base
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        message: 'Utilisateur introuvable',
+      });
+    }
+
+    /* ==========================
+       🔥 INVALIDATION DES TOKENS
+       Si tokenVersion différent :
+       -> token ancien
+       -> utilisateur déconnecté
+    ========================== */
+    if (decoded.tokenVersion !== user.tokenVersion) {
+      return res.status(401).json({
+        message: "Session expirée, reconnectez-vous",
+      });
+    }
+
+    // ✅ Injection utilisateur complet dans la requête
+    req.user = user;
 
     next();
+
   } catch (error) {
     return res.status(401).json({
       message: 'Token expiré ou invalide',
@@ -35,9 +61,9 @@ export const requireAuth = (req, res, next) => {
   }
 };
 
-/**
- * 👑 ADMIN UNIQUEMENT
- */
+/* ==========================
+   👑 ADMIN UNIQUEMENT
+========================== */
 export const requireAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({

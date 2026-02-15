@@ -55,6 +55,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    /* =====================================
+       🔐 VERSION TOKEN (INVALIDATION JWT)
+    ===================================== */
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

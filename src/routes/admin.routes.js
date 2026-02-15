@@ -1,4 +1,6 @@
 import express from "express";
+import bcrypt from "bcryptjs";
+
 import User from "../models/User.js";
 
 import { requireAuth } from "../middlewares/auth.middleware.js";
@@ -71,7 +73,7 @@ router.patch(
 );
 
 /* ==========================
-   🔑 CHANGE PASSWORD
+   🔑 CHANGE PASSWORD (1 USER)
    PUT /api/admin/users/:id/password
 ========================== */
 router.put(
@@ -90,6 +92,51 @@ router.post(
   requireAuth,
   requireAdmin,
   sendNotification
+);
+
+/* =======================================================
+   🔐 CHANGE GLOBAL PASSWORD (TOUS USERS + INVALIDATION JWT)
+   POST /api/admin/change-global-password
+======================================================= */
+router.post(
+  "/change-global-password",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({
+          message: "Mot de passe invalide (min 6 caractères)",
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      /* 🔐 UPDATE GLOBAL + INVALIDATION TOKENS */
+      await User.updateMany(
+        {},
+        {
+          password: hashedPassword,
+          $inc: { tokenVersion: 1 },
+        }
+      );
+
+      res.json({
+        message:
+          "Mot de passe global changé + déconnexion forcée de tous les utilisateurs",
+      });
+
+    } catch (err) {
+      console.error("Erreur changement mot de passe global:", err);
+      res.status(500).json({
+        message:
+          "Erreur serveur lors du changement global du mot de passe",
+      });
+    }
+  }
 );
 
 export default router;

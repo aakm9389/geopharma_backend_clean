@@ -39,6 +39,7 @@ export const login = async (req, res) => {
           id: user._id,
           role: 'admin',
           email: user.email,
+          tokenVersion: user.tokenVersion // 🔥 AJOUT CRITIQUE
         },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
@@ -92,6 +93,7 @@ export const login = async (req, res) => {
           id: user._id,
           role: 'user',
           email: user.email,
+          tokenVersion: user.tokenVersion // 🔥 AJOUT CRITIQUE
         },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
@@ -145,6 +147,7 @@ export const register = async (req, res) => {
       role,
       profession: role === 'admin' ? null : null,
       lastLoginAt: new Date(),
+      tokenVersion: 0 // 🔥 important pour initialisation
     });
 
     await user.save();

@@ -3,12 +3,17 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import notificationRoutes from './routes/notification.routes.js';
-import adminNotificationRoutes from './routes/admin.notification.routes.js';
-import notificationDeviceRoutes from './routes/notification.device.routes.js';
-import adminUserRoutes from './routes/admin.user.routes.js';
+/* =========================
+   🔔 NOTIFICATIONS ROUTES
+========================= */
+import notificationRoutes from "./routes/notification.routes.js";
+import adminNotificationRoutes from "./routes/admin.notification.routes.js";
+import notificationDeviceRoutes from "./routes/notification.device.routes.js";
 
-/* Routes */
+/* ADMIN USERS */
+import adminUserRoutes from "./routes/admin.user.routes.js";
+
+/* AUTRES ROUTES */
 import authRoutes from "./routes/auth.routes.js";
 import pharmacyRoutes from "./routes/pharmacy.routes.js";
 import medicineRoutes from "./routes/medicine.routes.js";
@@ -35,7 +40,7 @@ app.use(
   })
 );
 
-// ⚠️ OBLIGATOIRE POUR PREFLIGHT
+// ⚠️ PREFLIGHT
 app.options("*", cors());
 
 /* =========================
@@ -64,8 +69,9 @@ app.use(
 );
 
 /* =========================
-   🔐 ROUTES API
+   🔐 ROUTES API PRINCIPALES
 ========================= */
+
 app.use("/api/auth", authRoutes);
 app.use("/api", adminRoutes);
 
@@ -81,19 +87,19 @@ app.use("/api/specialties", specialtyRoutes);
 app.use("/api/dentals", dentalRoutes);
 
 /* =========================
-   🔔 NOTIFICATIONS
+   🔔 NOTIFICATIONS (OBLIGATOIRE)
 ========================= */
 
-// envoi notifications (logique existante)
-app.use('/api/notifications', notificationRoutes);
+// 👉 équivalent du require("./routes/notification.routes")
+app.use("/api/notifications", notificationRoutes);
 
-// envoi notifications admin
-app.use('/admin/notifications', adminNotificationRoutes);
+// admin notifications
+app.use("/admin/notifications", adminNotificationRoutes);
 
-// 📲 enregistrement appareil FCM
-app.use('/api/notifications', notificationDeviceRoutes);
+// 📲 enregistrement FCM device
+app.use("/api/notifications", notificationDeviceRoutes);
 
-app.use('/api/admin', adminUserRoutes);
-
+// admin users
+app.use("/api/admin", adminUserRoutes);
 
 export default app;
