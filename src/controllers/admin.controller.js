@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
+import Settings from "../models/Settings.js";
 
 /* ==========================
-   🔑 CHANGE USER PASSWORD
-   PUT /api/admin/users/:id/password
+   CHANGE USER PASSWORD (OLD)
 ========================== */
 export const changeUserPassword = async (req, res) => {
   try {
@@ -12,7 +12,7 @@ export const changeUserPassword = async (req, res) => {
 
     if (!newPassword || newPassword.length < 4) {
       return res.status(400).json({
-        message: "Mot de passe invalide (min 4 caractères)",
+        message: "Mot de passe invalide",
       });
     }
 
@@ -24,14 +24,75 @@ export const changeUserPassword = async (req, res) => {
       });
     }
 
-    // 🔐 hash nouveau mot de passe
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({
-      message: "Mot de passe mis à jour avec succès",
+      message: "Mot de passe utilisateur modifié",
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ==========================
+   GLOBAL USER PASSWORD
+========================== */
+export const changeGlobalUserPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    const settings = await Settings.findOne();
+
+    const same = await bcrypt.compare(
+      newPassword,
+      settings.adminPassword
+    );
+
+    if (same)
+      return res.status(400).json({
+        message: "Même password que admin interdit",
+      });
+
+    settings.userPassword =
+      await bcrypt.hash(newPassword, 10);
+
+    await settings.save();
+
+    res.json({
+      message: "Mot de passe global USER modifié",
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/* ==========================
+   GLOBAL ADMIN PASSWORD
+========================== */
+export const changeGlobalAdminPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    const settings = await Settings.findOne();
+
+    const same = await bcrypt.compare(
+      newPassword,
+      settings.userPassword
+    );
+
+    if (same)
+      return res.status(400).json({
+        message: "Même password que user interdit",
+      });
+
+    settings.adminPassword =
+      await bcrypt.hash(newPassword, 10);
+
+    await settings.save();
+
+    res.json({
+      message: "Mot de passe global ADMIN modifié",
     });
   } catch (err) {
     res.status(500).json({ message: err.message });

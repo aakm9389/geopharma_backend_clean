@@ -2,11 +2,17 @@ import express from "express";
 import bcrypt from "bcryptjs";
 
 import User from "../models/User.js";
+import Settings from "../models/Settings.js";
 
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { requireAdmin } from "../middlewares/admin.middleware.js";
 
-import { changeUserPassword } from "../controllers/admin.controller.js";
+import {
+  changeUserPassword,
+  changeGlobalUserPassword,
+  changeGlobalAdminPassword,
+} from "../controllers/admin.controller.js";
+
 import { sendNotification } from "../controllers/notification.controller.js";
 
 const router = express.Router();
@@ -41,7 +47,6 @@ router.get(
 
 /* ==========================
    🔒 BLOCK / UNBLOCK USER
-   PATCH /api/admin/users/:id/block
 ========================== */
 router.patch(
   "/admin/users/:id/block",
@@ -74,7 +79,6 @@ router.patch(
 
 /* ==========================
    🔑 CHANGE PASSWORD (1 USER)
-   PUT /api/admin/users/:id/password
 ========================== */
 router.put(
   "/admin/users/:id/password",
@@ -85,7 +89,6 @@ router.put(
 
 /* ==========================
    🔔 ENVOI NOTIFICATION ADMIN
-   POST /api/admin/notifications/send
 ========================== */
 router.post(
   "/admin/notifications/send",
@@ -95,8 +98,29 @@ router.post(
 );
 
 /* =======================================================
-   🔐 CHANGE GLOBAL PASSWORD (TOUS USERS + INVALIDATION JWT)
-   POST /api/admin/change-global-password
+   🔐 CHANGE GLOBAL USER PASSWORD
+   (Tous les USERS utilisent ce password)
+======================================================= */
+router.post(
+  "/change-global-user-password",
+  requireAuth,
+  requireAdmin,
+  changeGlobalUserPassword
+);
+
+/* =======================================================
+   🔐 CHANGE GLOBAL ADMIN PASSWORD
+======================================================= */
+router.post(
+  "/change-global-admin-password",
+  requireAuth,
+  requireAdmin,
+  changeGlobalAdminPassword
+);
+
+/* =======================================================
+   🔐 LEGACY ROUTE (COMPATIBILITÉ)
+   Invalidation JWT seulement
 ======================================================= */
 router.post(
   "/change-global-password",
@@ -104,36 +128,23 @@ router.post(
   requireAdmin,
   async (req, res) => {
     try {
-      const { newPassword } = req.body;
-
-      if (!newPassword || newPassword.length < 6) {
-        return res.status(400).json({
-          message: "Mot de passe invalide (min 6 caractères)",
-        });
-      }
-
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-      /* 🔐 UPDATE GLOBAL + INVALIDATION TOKENS */
+      /* ✅ Déconnexion forcée */
       await User.updateMany(
         {},
         {
-          password: hashedPassword,
           $inc: { tokenVersion: 1 },
         }
       );
 
       res.json({
         message:
-          "Mot de passe global changé + déconnexion forcée de tous les utilisateurs",
+          "Tous les utilisateurs ont été déconnectés",
       });
-
     } catch (err) {
-      console.error("Erreur changement mot de passe global:", err);
+      console.error("Erreur invalidation tokens:", err);
+
       res.status(500).json({
-        message:
-          "Erreur serveur lors du changement global du mot de passe",
+        message: "Erreur serveur",
       });
     }
   }
